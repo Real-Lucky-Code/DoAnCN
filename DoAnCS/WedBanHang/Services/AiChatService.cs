@@ -4,11 +4,11 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
-using WedBanHang.Models; 
+using WedBanHang.Models;
 
 public class AiChatService
 {
-    private readonly ApplicationDbContext _context;  
+    private readonly ApplicationDbContext _context;  // ✅ thêm dòng này
     private readonly HttpClient _http;
     private readonly string _apiKey;
     private readonly string _model;
@@ -29,20 +29,24 @@ public class AiChatService
         if (string.IsNullOrWhiteSpace(_apiKey))
             return "AI lỗi: API key chưa được cấu hình.";
 
-        // 🔹 1. Lấy dữ liệu sản phẩm từ DB
+
         var products = await _context.Products
             .Select(p => new { p.Name, p.Price, p.Description })
             .Take(50)
             .ToListAsync();
 
-        // 🔹 2. Chuyển dữ liệu sản phẩm thành text
+
         var productContext = string.Join("\n", products.Select(p =>
             $"- {p.Name}: {p.Price:N0} VNĐ. Mô tả: {p.Description}"
         ));
 
-        // 🔹 3. Prompt cho AI
+
         var systemPrompt = @$"
             Bạn là trợ lý bán hàng của cửa hàng WebBanHang.
+            Bạn có thê trả lời bình thường các câu giao tiếp đơn giản.
+            Hãy cố gắng **hiểu nghĩa tương tự**, ví dụ:
+            - 'bàn phím màu trắng' nên được hiểu là 'bàn phím trắng'
+            - 'quạt hơi nước nhỏ' có thể là 'quạt hơi nước' hoặc 'quạt mini'
             Chỉ trả lời dựa trên thông tin sản phẩm trong danh sách dưới đây.
             Không bịa đặt, không nói ngoài phạm vi sản phẩm.
             Nếu không tìm thấy sản phẩm phù hợp thì nói: 'Xin lỗi, hiện chưa có sản phẩm phù hợp.'

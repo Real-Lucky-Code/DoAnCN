@@ -30,8 +30,23 @@
 
     function toggleAiChat() {
         const box = document.getElementById("aiChatBox");
-        box.style.display = box.style.display === "block" ? "none" : "block";
+        const isOpen = box.style.display === "block";
+
+        box.style.display = isOpen ? "none" : "block";
+
+        // Đóng Chat hỗ trợ nếu mở
+        if (!isOpen) {
+            const supportBox = document.getElementById("chatBox");
+            if (supportBox) supportBox.style.display = "none";
+
+            //  Tải lịch sử chat AI khi lần đầu mở
+            if (!window.aiChatLoaded) {
+                loadAiChatHistory(true);
+                window.aiChatLoaded = true;
+            }
+        }
     }
+
 
     async function handleAiKeyPress(e) {
         if (e.key === "Enter") {
@@ -70,6 +85,50 @@
             </div>`;
         chatBox.scrollTop = chatBox.scrollHeight;
     }
+
+    async function loadAiChatHistory(scrollToBottom = false) {
+        try {
+            const res = await fetch("/api/ai/messages");
+            const messages = await res.json();
+            const chatBox = document.getElementById("aiChatMessages");
+
+            if (!chatBox || chatBox.children.length > 0) return;
+
+            let lastMessageTime = null;
+
+            messages.forEach(m => {
+                const isUser = m.sender === "Bạn";
+                const currentTime = new Date(m.rawTimestamp);
+
+                if (!lastMessageTime || Math.abs(currentTime - lastMessageTime) >= 60 * 60 * 1000) {
+                    const formatted = currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + " " +
+                        currentTime.toLocaleDateString();
+                    chatBox.innerHTML += `<div class="timestamp-separator">${formatted}</div>`;
+                }
+
+                chatBox.innerHTML += `
+                    <div class="chat-message ${isUser ? 'user' : 'admin'}">
+                        <div class="chat-name">${m.sender}</div>
+                        <div class="message-row">
+                            <img class="avatar" src="${m.avatar}" alt="Avatar">
+                            <div class="bubble">${m.content}</div>
+                        </div>
+                    </div>
+                `;
+
+                lastMessageTime = currentTime;
+            });
+
+            if (scrollToBottom) {
+                setTimeout(() => {
+                    chatBox.scrollTop = chatBox.scrollHeight;
+                }, 0);
+            }
+        } catch (err) {
+            console.error("Không thể tải lịch sử chat AI:", err);
+        }
+    }
+
 </script>
 
 <style>
