@@ -116,6 +116,13 @@
             <p class="mb-0">@Model.CancelReason</p>
         </div>
     }
+    @if (!string.IsNullOrEmpty(Model.ReturnReason))
+    {
+        <div class="alert alert-info mt-3">
+            <h5><i class="fa-solid fa-rotate-left me-2"></i>Lý do trả hàng:</h5>
+            <p class="mb-0">@Model.ReturnReason</p>
+        </div>
+    }
 
     <!-- Order Items Table -->
     <div class="mb-4">
