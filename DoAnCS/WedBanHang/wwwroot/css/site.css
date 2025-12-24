@@ -80,7 +80,7 @@ main {
     display: block;
 }
 
-/* Dropdown style nâng cao */
+/* Dropdown style nï¿½ng cao */
 .notification-menu {
     display: none;
     position: absolute;
@@ -95,7 +95,7 @@ main {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-/* N?i dung thông báo */
+/* N?i dung thï¿½ng bï¿½o */
 .notification-item {
     padding: 10px 15px;
     font-size: 14px;
@@ -147,16 +147,43 @@ main {
     }
 
 .navbar-brand {
-    color: #212529; /* Màu ch? ban ??u (tùy theo giao di?n) */
+    color: #212529; /* Mï¿½u ch? ban ??u (tï¿½y theo giao di?n) */
     transition: color 0.3s ease;
     text-decoration: none;
 }
 
     .navbar-brand:hover {
-        color: #0d6efd; /* Màu khi hover (xanh Bootstrap) */
+        color: #0d6efd; /* Mï¿½u khi hover (xanh Bootstrap) */
     }
 
 .search-bar {
     max-width: 600px;
     width: 100%;
 }
+.suggestion-list {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    z-index: 2000;
+    display: none;
+    max-height: 250px;
+    max-width: 600px;
+    overflow-y: auto;
+}
+
+.suggestion-item {
+    padding: 8px 12px;
+    cursor: pointer;
+}
+
+    .suggestion-item:hover {
+        background-color: #f0f0f0;
+    }
+
