@@ -336,5 +336,33 @@ namespace WebBanHang.Controllers
             return Json(new { success = true, message });
         }
 
+        [HttpPost]
+        public async Task<IActionResult> RequestReturn(int orderId, string reason)
+        {
+            var userId = _userManager.GetUserId(User);
+            var order = await _context.Orders.FirstOrDefaultAsync(o => o.Id == orderId && o.ApplicationUserId == userId);
+
+            if (order == null)
+                return Json(new { success = false, message = "Không tìm thấy đơn hàng." });
+
+            if (order.Status != OrderStatus.DaGiao)
+                return Json(new { success = false, message = "Chỉ có thể yêu cầu trả hàng khi đơn đã giao." });
+
+            order.Status = OrderStatus.ChoTra;
+            order.ReturnReason = reason;
+            order.ReturnRequestedAt = DateTime.Now;
+
+            await _context.SaveChangesAsync();
+
+            _context.Notifications.Add(new Notification
+            {
+                UserId = userId,
+                Message = $"Bạn đã gửi yêu cầu trả hàng cho đơn #{order.Id}.",
+                CreatedAt = DateTime.Now
+            });
+            await _context.SaveChangesAsync();
+
+            return Json(new { success = true, message = "Yêu cầu trả hàng của bạn đã được gửi. Vui lòng chờ xử lý." });
+        }
     }
 }
