@@ -13,6 +13,8 @@ public static class OrderStatusExtensions
             OrderStatus.HoanThanh => "Hoàn thành",
             OrderStatus.ChoHuy => "Chờ hủy",
             OrderStatus.DaHuy => "Đã hủy",
+            OrderStatus.ChoTra => "Chờ trả hàng",
+            OrderStatus.DaTraHang => "Trả hàng",
             _ => "Không xác định"
         };
     }
@@ -26,8 +28,10 @@ public static class OrderStatusExtensions
             OrderStatus.DangVanChuyen => "primary",
             OrderStatus.DaGiao => "secondary",
             OrderStatus.HoanThanh => "success",
-            OrderStatus.ChoHuy => "warning",   
+            OrderStatus.ChoHuy => "warning text-dark",
             OrderStatus.DaHuy => "danger",
+            OrderStatus.ChoTra => "primary text-dark",
+            OrderStatus.DaTraHang => "dark text-white",
             _ => "light"
         };
     }
@@ -41,6 +45,7 @@ public static class OrderStatusExtensions
             OrderStatus.DangVanChuyen => "Đã giao hàng",
             OrderStatus.DaGiao => "Hoàn tất đơn",
             OrderStatus.ChoHuy => "Xử lý hủy",
+            OrderStatus.ChoTra => "Xử lý trả hàng",
             _ => "Tiếp theo"
         };
     }
@@ -55,7 +60,9 @@ public static class OrderStatusExtensions
             OrderStatus.DaGiao => $"Đơn hàng #{orderId} đã được giao thành công.",
             OrderStatus.HoanThanh => $"Đơn hàng #{orderId} đã hoàn tất. Cảm ơn bạn đã mua hàng!",
             OrderStatus.ChoHuy => $"Đơn hàng #{orderId} đang được yêu cầu hủy. Chờ admin xử lý.",
-            OrderStatus.DaHuy => $"Đơn hàng #{orderId} đã bị hủy.",
+            OrderStatus.DaHuy => $"Yêu cầu hủy đơn hàng #{orderId} đã được chấp nhận.",
+            OrderStatus.ChoTra => $"Đơn hàng #{orderId} đang chờ xử lý yêu cầu trả hàng.",
+            OrderStatus.DaTraHang => $"Đơn hàng #{orderId} đã được chấp nhận hoàn trả thành công. Vui lòng liên hệ với nhân viên để biết thêm chi tiết",
             _ => $"Đơn hàng #{orderId} có cập nhật mới."
         };
     }

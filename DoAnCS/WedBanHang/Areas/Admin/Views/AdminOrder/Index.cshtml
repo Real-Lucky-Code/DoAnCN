@@ -3,17 +3,7 @@
 
 @{
     ViewData["Title"] = "Quản lý đơn hàng";
-    Func<OrderStatus, string> getStatusClass = status => status switch
-    {
-        OrderStatus.ChoXacNhan => "warning text-dark",
-        OrderStatus.DangChuanBi => "info",
-        OrderStatus.DangVanChuyen => "primary",
-        OrderStatus.DaGiao => "secondary",
-        OrderStatus.HoanThanh => "success",
-		OrderStatus.ChoHuy => "danger text-dark",
-        OrderStatus.DaHuy => "danger",
-        _ => "light"
-    };
+   
 }
 
 <div class="d-flex justify-content-between align-items-center mb-4">
@@ -26,7 +16,7 @@
     <table id="orderTable" class="table table-hover align-middle" style="table-layout: fixed; width: 100%;">
         <thead class="table-light">
             <tr>
-                <th style ="width: 70px;">Mã đơn</th>
+                <th style ="width: 70px;">ID</th>
                 <th>Người đặt</th>
                 <th>Ngày đặt</th>
                 <th>Thanh toán</th>
@@ -61,17 +51,17 @@
                     </td>
 
                     <td>
-                        <span class="badge bg-@getStatusClass(order.Status)">
+                        <span class="badge bg-@order.Status.ToStatusColor()">
                             @order.Status.ToFriendlyString()
                         </span>
                     </td>
+
                     <td>
                         <div class="d-flex flex-wrap gap-2">
                             <a asp-area="Admin" asp-controller="AdminOrder" asp-action="Details" asp-route-id="@order.Id" class="btn btn-sm btn-outline-info">
                                 <i class="bi bi-eye"></i> Chi tiết
                             </a>
-
-                            @if (order.Status != OrderStatus.HoanThanh && order.Status != OrderStatus.DaHuy)
+                            @if (order.Status != OrderStatus.HoanThanh && order.Status != OrderStatus.DaHuy  && order.Status != OrderStatus.DaTraHang && order.Status != OrderStatus.ChoTra)
                             {
                                 @if (order.Status == OrderStatus.ChoHuy)
                                 {
@@ -79,11 +69,13 @@
                                             class="btn btn-sm btn-outline-danger"
                                             data-bs-toggle="modal"
                                             data-bs-target="#cancelActionModal"
-                                            data-id="@order.Id">
+                                            data-id="@order.Id"
+                                            data-reason="@order.CancelReason">
                                         <i class="bi bi-exclamation-triangle me-1"></i> Xử lý hủy
                                     </button>
                                 }
-                                else
+
+                                else if (order.Status != OrderStatus.DaGiao)
                                 {
                                     <button class="btn btn-sm btn-outline-success btn-update-status" data-id="@order.Id">
                                         <i class="bi bi-arrow-repeat"></i> @order.Status.GetActionLabel()
@@ -94,9 +86,20 @@
                                     <i class="bi bi-x-circle"></i> Hủy
                                 </button>
                             }
+                            else if (order.Status == OrderStatus.ChoTra)
+                            {
+                                <button type="button"
+                                        class="btn btn-sm btn-outline-warning"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#returnActionModal"
+                                        data-id="@order.Id"
+                                        data-reason="@order.ReturnReason">
+                                    <i class="bi bi-arrow-counterclockwise me-1"></i> Xử lý trả
+                                </button>
+                            }
                         </div>
                     </td>
-                    
+
                 </tr>
             }
         </tbody>
@@ -112,9 +115,14 @@
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <p class="mb-2">Khách hàng đã yêu cầu hủy đơn hàng này.</p>
-                <p>Bạn có muốn xác nhận hủy đơn hay từ chối yêu cầu hủy?</p>
+                <p class="mb-2">Khách hàng đã yêu cầu <b>hủy đơn hàng</b> này.</p>
+                <div class="alert alert-warning" id="cancelReasonBox" style="display:none;">
+                    <strong><i class="bi bi-chat-left-quote me-1"></i>Lý do hủy đơn:</strong>
+                    <p class="mb-0" id="cancelReasonText"></p>
+                </div>
+<p>Bạn có muốn xác nhận hủy đơn hay từ chối yêu cầu này?</p>
             </div>
+
             <div class="modal-footer">
                 <form id="approveCancelForm" method="post" asp-action="ApproveCancel" asp-controller="AdminOrder">
                     <input type="hidden" name="id" id="approveCancelOrderId" />
@@ -127,6 +135,44 @@
                     <input type="hidden" name="id" id="rejectCancelOrderId" />
                     <button type="submit" class="btn btn-secondary">
                         <i class="bi bi-x-circle me-1"></i> Từ chối hủy
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 🔻 Modal xử lý yêu cầu trả hàng -->
+<div class="modal fade" id="returnActionModal" tabindex="-1" aria-labelledby="returnActionLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title" id="returnActionLabel">
+                    <i class="bi bi-arrow-return-left me-2"></i> Xử lý yêu cầu trả hàng
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Khách hàng đã gửi yêu cầu <b>trả hàng</b>.</p>
+                <div class="alert alert-info" id="returnReasonBox" style="display:none;">
+                    <strong><i class="bi bi-chat-left-quote me-1"></i>Lý do trả hàng:</strong>
+                    <p class="mb-0" id="returnReasonText"></p>
+                </div>
+                <p>Bạn có muốn chấp nhận hay từ chối yêu cầu này?</p>
+            </div>
+
+            <div class="modal-footer">
+                <form method="post" asp-action="ApproveReturn" asp-controller="AdminOrder">
+                    <input type="hidden" name="id" id="approveReturnOrderId" />
+                    <button type="submit" class="btn btn-warning">
+                        <i class="bi bi-check-circle me-1"></i> Chấp nhận trả hàng
+                    </button>
+                </form>
+
+                <form method="post" asp-action="RejectReturn" asp-controller="AdminOrder">
+                    <input type="hidden" name="id" id="rejectReturnOrderId" />
+                    <button type="submit" class="btn btn-secondary">
+                        <i class="bi bi-x-circle me-1"></i> Từ chối trả hàng
                     </button>
                 </form>
             </div>
@@ -198,16 +244,47 @@
                 order: [[0, 'desc']]
             });
 
-            document.querySelectorAll('.btn-update-status').forEach(btn => {
-                btn.addEventListener('click', async function () {
-                    const id = this.dataset.id;
-                    const response = await fetch(`/Admin/AdminOrder/Confirm/${id}`, {
-                        method: 'POST'
-                    });
-                    if (response.ok) location.reload();
-                    else alert("Cập nhật trạng thái thất bại.");
+        document.querySelectorAll('.btn-update-status').forEach(btn => {
+            btn.addEventListener('click', async function () {
+                const id = this.dataset.id;
+                const response = await fetch(`/Admin/AdminOrder/Confirm/${id}`, {
+                    method: 'POST'
                 });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    if (result.success) {
+                        const row = this.closest('tr');
+                        const statusCell = row.querySelector('td:nth-child(6) span');
+
+                        // Cập nhật trạng thái & màu
+                        statusCell.textContent = result.newStatus;
+                        statusCell.className = `badge bg-${result.newStatusClass}`;
+
+                        // Cập nhật text của nút (nếu chưa hoàn thành)
+                        if (!result.isDone) {
+                            this.innerHTML = `<i class="bi bi-arrow-repeat"></i> ${result.nextActionLabel}`;
+                        } else {
+                            //  Nếu đơn đã giao hoặc hoàn thành → ẩn nút
+                            this.remove();
+                        }
+
+                        // Thông báo
+                        const toast = document.createElement('div');
+                        toast.textContent = result.message;
+                        toast.className = 'alert alert-success position-fixed top-0 end-0 m-3';
+                        document.body.appendChild(toast);
+                        setTimeout(() => toast.remove(), 3000);
+                    } else {
+                        alert(result.message);
+                    }
+                } else {
+                    alert("Cập nhật trạng thái thất bại.");
+                }
             });
+        });
+
+
 
             document.querySelectorAll('.btn-cancel-order').forEach(btn => {
                 btn.addEventListener('click', async function () {
@@ -226,13 +303,47 @@
 
     <script>
         const cancelModal = document.getElementById('cancelActionModal');
+         if (cancelModal) {
+             cancelModal.addEventListener('show.bs.modal', event => {
+                 const button = event.relatedTarget;
+                 const orderId = button.getAttribute('data-id');
+                 const reason = button.getAttribute('data-reason');
 
-        cancelModal.addEventListener('show.bs.modal', event => {
+                 document.getElementById('approveCancelOrderId').value = orderId;
+                 document.getElementById('rejectCancelOrderId').value = orderId;
+
+                 // Hiển thị lý do
+                 const reasonBox = document.getElementById('cancelReasonBox');
+                 const reasonText = document.getElementById('cancelReasonText');
+                 if (reason && reason.trim() !== "") {
+                     reasonText.textContent = reason;
+                     reasonBox.style.display = "block";
+                 } else {
+                     reasonBox.style.display = "none";
+                 }
+             });
+         }
+    </script>
+    <script>
+    const returnModal = document.getElementById('returnActionModal');
+    if (returnModal) {
+        returnModal.addEventListener('show.bs.modal', event => {
             const button = event.relatedTarget;
             const orderId = button.getAttribute('data-id');
+            const reason = button.getAttribute('data-reason');
+                document.getElementById('approveReturnOrderId').value = orderId;
+                    document.getElementById('rejectReturnOrderId').value = orderId;
 
-            document.getElementById('approveCancelOrderId').value = orderId;
-            document.getElementById('rejectCancelOrderId').value = orderId;
-        });
+                    // Hiển thị lý do
+                    const reasonBox = document.getElementById('returnReasonBox');
+                    const reasonText = document.getElementById('returnReasonText');
+                    if (reason && reason.trim() !== "") {
+                        reasonText.textContent = reason;
+                        reasonBox.style.display = "block";
+                    } else {
+                        reasonBox.style.display = "none";
+                    }
+                });
+            }
     </script>
 }

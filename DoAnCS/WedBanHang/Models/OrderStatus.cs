@@ -2,12 +2,14 @@
 {
     public enum OrderStatus
     {
-        ChoXacNhan,       // 0
-        DangChuanBi,      // 1
-        DangVanChuyen,    // 2
-        DaGiao,           // 3
-        HoanThanh,        // 4
-        ChoHuy,           // 5 
-        DaHuy             // 6 
+        ChoXacNhan,
+        DangChuanBi,
+        DangVanChuyen,
+        DaGiao,
+        HoanThanh,
+        ChoHuy,
+        DaHuy,
+        ChoTra,
+        DaTraHang
     }
 }

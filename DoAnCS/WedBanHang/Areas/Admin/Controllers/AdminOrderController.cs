@@ -204,6 +204,52 @@ namespace WebBanHang.Areas.Admin.Controllers
             return RedirectToAction(nameof(Details), new { id });
         }
 
+        [HttpPost]
+        public async Task<IActionResult> ApproveReturn(int id)
+        {
+            var order = await _context.Orders.FindAsync(id);
+            if (order == null)
+                return NotFound();
 
+            if (order.Status != OrderStatus.ChoTra)
+                return BadRequest("Đơn hàng không trong trạng thái chờ trả hàng.");
+
+            order.Status = OrderStatus.DaTraHang;
+            await _context.SaveChangesAsync();
+
+            _context.Notifications.Add(new Notification
+            {
+                UserId = order.ApplicationUserId,
+                Message = $"Yêu cầu trả hàng của bạn cho đơn #{order.Id} đã được chấp nhận.",
+                CreatedAt = DateTime.Now
+            });
+            await _context.SaveChangesAsync();
+
+            return RedirectToAction("Index");
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> RejectReturn(int id)
+        {
+            var order = await _context.Orders.FindAsync(id);
+            if (order == null)
+                return NotFound();
+
+            if (order.Status != OrderStatus.ChoTra)
+                return BadRequest("Đơn hàng không trong trạng thái chờ trả hàng.");
+
+            order.Status = OrderStatus.DaGiao;
+            await _context.SaveChangesAsync();
+
+            _context.Notifications.Add(new Notification
+            {
+                UserId = order.ApplicationUserId,
+                Message = $"Yêu cầu trả hàng của bạn cho đơn #{order.Id} đã bị từ chối.",
+                CreatedAt = DateTime.Now
+            });
+            await _context.SaveChangesAsync();
+
+            return RedirectToAction("Index");
+        }
     }
 }

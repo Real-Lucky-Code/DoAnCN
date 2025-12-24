@@ -22,5 +22,7 @@
         public string? CancelReason { get; set; }          
         public DateTime? CancelRequestedAt { get; set; }  
         public string? CancelRequestedBy { get; set; }
+        public string? ReturnReason { get; set; }          // Lý do trả hàng
+        public DateTime? ReturnRequestedAt { get; set; }   // Thời gian gửi yêu cầu
     }
 }

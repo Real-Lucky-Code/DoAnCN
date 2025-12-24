@@ -36,7 +36,7 @@
     <li class="nav-item">
         <a class="nav-link @(selectedStatus == OrderStatus.DangChuanBi.ToString() ? "active" : "")"
            asp-action="History" asp-controller="Order" asp-route-status="@OrderStatus.DangChuanBi">
-            Chuẩn bị hàng
+            Chuẩn bị
         </a>
     </li>
     <li class="nav-item">
@@ -48,7 +48,7 @@
     <li class="nav-item">
         <a class="nav-link @(selectedStatus == OrderStatus.DaGiao.ToString() ? "active" : "")"
            asp-action="History" asp-controller="Order" asp-route-status="@OrderStatus.DaGiao">
-            Đã giao hàng
+            Đã giao
         </a>
     </li>
     <li class="nav-item">
@@ -70,6 +70,19 @@
             Đã hủy
         </a>
     </li>
+    <li class="nav-item">
+<a class="nav-link @(selectedStatus == OrderStatus.ChoTra.ToString() ? "active" : "")"
+           asp-action="History" asp-controller="Order" asp-route-status="@OrderStatus.ChoTra">
+            Chờ trả
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link @(selectedStatus == OrderStatus.DaTraHang.ToString() ? "active" : "")"
+           asp-action="History" asp-controller="Order" asp-route-status="@OrderStatus.DaTraHang">
+            Trả hàng
+        </a>
+    </li>
+
 </ul>
 
 
@@ -111,7 +124,7 @@ else
                                 <div class="d-flex flex-column">
                                     <span class="fw-bold">@item.Product.Name</span>
                                     <div class="mt-2">
-                                        @if ((order.Status == OrderStatus.DaGiao || order.Status == OrderStatus.HoanThanh) && !hasReviewed)
+                                        @if (order.Status == OrderStatus.HoanThanh && !hasReviewed)
                                         {
                                             <a href="javascript:void(0);"
                                                class="btn btn-sm btn-outline-primary"
@@ -166,6 +179,26 @@ else
                         <i class="fa fa-times-circle me-1"></i> Hủy đơn hàng
                     </button>
                 }
+
+                @if (order.Status == OrderStatus.DaGiao)
+                {
+                    <div class="d-flex gap-2">
+                      
+                        <button type="button"
+                                class="btn btn-outline-success btn-confirm-received"
+                                data-order-id="@order.Id">
+                            <i class="fa fa-check-circle me-1"></i> Đã nhận hàng
+                        </button>
+                        <button type="button"
+                                class="btn btn-outline-warning btn-return-order"
+                                data-order-id="@order.Id"
+                                data-bs-toggle="modal"
+                                data-bs-target="#returnOrderModal">
+                            <i class="fa fa-undo me-1"></i> Trả hàng
+                        </button>
+                    </div>
+                }
+
                 else
                 {
                     <!-- giữ chỗ để layout không bị lệch -->
@@ -259,6 +292,31 @@ else
     </div>
 </div>
 
+<!-- 🔻 Modal Trả Hàng -->
+<div class="modal fade" id="returnOrderModal" tabindex="-1" aria-labelledby="returnOrderLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="returnOrderForm" method="post">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="returnOrderLabel">Yêu cầu trả hàng</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="returnOrderId" name="orderId" />
+                    <div class="mb-3">
+                        <label class="form-label">Lý do trả hàng</label>
+                        <textarea name="reason" class="form-control" rows="3" required placeholder="Vui lòng nhập lý do trả hàng..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-warning">Gửi yêu cầu</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Trở lại</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 
 <style>
     .toast-message {
@@ -275,7 +333,6 @@ else
         display: none;
         animation: fadeInOut 3s ease-in-out;
         border: 5px solid #00FF66;
-
     }
 
     @@keyframes fadeInOut {
@@ -376,6 +433,16 @@ else
         .order-status.DaHuy {
             background-color: #f8d7da;
             color: #F00000;
+        }
+
+        .order-status.ChoTra {
+            background-color: #cfe2ff;
+            color: blue;
+        }
+
+        .order-status.DaTraHang {
+            background-color: black;
+            color: wheat;
         }
 
     .table-order th,
@@ -496,84 +563,129 @@ else
 
 
                 // ✅ Hiển thị toast cảm ơn
-                const toast = document.getElementById('reviewToast');
-                toast.style.display = 'block';
-                setTimeout(() => {
-                    toast.style.display = 'none';
-                }, 3000);
-            } else {
-                alert("Gửi đánh giá thất bại. Vui lòng thử lại.");
-            }
-        });
-        document.querySelectorAll('.rating-star').forEach(star => {
-            star.addEventListener('click', function () {
-                const rating = parseInt(this.dataset.value);
-                document.getElementById('ratingValue').value = rating;
+            const toast = document.getElementById('reviewToast');
+            toast.style.display = 'block';
+            setTimeout(() => {
+                toast.style.display = 'none';
+            }, 3000);
+        } else {
+            alert("Gửi đánh giá thất bại. Vui lòng thử lại.");
+        }
+    });
+    document.querySelectorAll('.rating-star').forEach(star => {
+        star.addEventListener('click', function () {
+            const rating = parseInt(this.dataset.value);
+            document.getElementById('ratingValue').value = rating;
 
-                // Update sao hiển thị
-                document.querySelectorAll('.rating-star').forEach(s => {
-                    const val = parseInt(s.dataset.value);
-                    if (val <= rating) {
-                        s.classList.add('filled');
-                        s.classList.remove('outlined');
-                        s.classList.replace('fa-regular', 'fa-solid');
-                    } else {
-                        s.classList.remove('filled');
-                        s.classList.add('outlined');
-                        s.classList.replace('fa-solid', 'fa-regular');
-                    }
-                });
+            // Update sao hiển thị
+            document.querySelectorAll('.rating-star').forEach(s => {
+                const val = parseInt(s.dataset.value);
+                if (val <= rating) {
+                    s.classList.add('filled');
+                    s.classList.remove('outlined');
+                    s.classList.replace('fa-regular', 'fa-solid');
+                } else {
+                    s.classList.remove('filled');
+                    s.classList.add('outlined');
+                    s.classList.replace('fa-solid', 'fa-regular');
+                }
             });
         });
-        document.getElementById('imageInput').addEventListener('change', function () {
-            const previewContainer = document.getElementById('imagePreview');
-            previewContainer.innerHTML = ""; // Clear cũ
-            const files = this.files;
+    });
+    document.getElementById('imageInput').addEventListener('change', function () {
+        const previewContainer = document.getElementById('imagePreview');
+        previewContainer.innerHTML = ""; // Clear cũ
+        const files = this.files;
 
-            if (files) {
-                Array.from(files).forEach(file => {
-                    const reader = new FileReader();
-                    reader.onload = function (e) {
-                        const img = document.createElement("img");
-                        img.src = e.target.result;
-                        previewContainer.appendChild(img);
-                    };
-                    reader.readAsDataURL(file);
-                });
-            }
+        if (files) {
+            Array.from(files).forEach(file => {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    const img = document.createElement("img");
+                    img.src = e.target.result;
+                    previewContainer.appendChild(img);
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+    });
+
+    // Khi mở modal hủy đơn
+    document.querySelectorAll('.btn-cancel-order').forEach(btn => {
+        btn.addEventListener('click', function () {
+            const orderId = this.dataset.orderId;
+            document.getElementById('cancelOrderId').value = orderId;
+        });
+    });
+     // Gửi form hủy đơn
+    document.getElementById('cancelOrderForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+        const form = e.target;
+        const formData = new FormData(form);
+
+        const response = await fetch('/Order/RequestCancel', {
+            method: 'POST',
+            body: formData
         });
 
-                // Khi mở modal hủy đơn
-        document.querySelectorAll('.btn-cancel-order').forEach(btn => {
-            btn.addEventListener('click', function () {
-                const orderId = this.dataset.orderId;
-                document.getElementById('cancelOrderId').value = orderId;
-            });
-        });
-                // Gửi form hủy đơn
-        document.getElementById('cancelOrderForm').addEventListener('submit', async function (e) {
-            e.preventDefault();
-            const form = e.target;
-            const formData = new FormData(form);
+        //  Đọc JSON từ server
+        const result = await response.json();
 
-            const response = await fetch('/Order/RequestCancel', {
-                method: 'POST',
-                body: formData
-            });
-
-            // ✅ Đọc JSON từ server
-            const result = await response.json();
-
-            if (result.success) {
-                alert(result.message); // 👉 Hiển thị đúng nội dung thực tế
+        if (result.success) {
+            alert(result.message); // 👉 Hiển thị đúng nội dung thực tế
                 bootstrap.Modal.getInstance(document.getElementById('cancelOrderModal')).hide();
-                location.reload();
-            } else {
-                alert(result.message || "Không thể hủy đơn hàng này.");
-            }
-        });
+                    location.reload();
+                } else {
+                    alert(result.message || "Không thể hủy đơn hàng này.");
+                }
+            });
 
+             //  Xác nhận đã nhận hàng
+            document.querySelectorAll('.btn-confirm-received').forEach(btn => {
+                btn.addEventListener('click', async function () {
+                    const orderId = this.dataset.orderId;
+                    if (!confirm("Bạn xác nhận đã nhận được hàng?")) return;
+
+                    const response = await fetch('/Order/ConfirmReceived', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: `orderId=${orderId}`
+                    });
+
+                    const result = await response.json();
+                    alert(result.message);
+                    if (result.success) location.reload();
+                });
+            });
+
+             // Khi mở modal trả hàng
+            document.querySelectorAll('.btn-return-order').forEach(btn => {
+                btn.addEventListener('click', function () {
+                    const orderId = this.dataset.orderId;
+                    document.getElementById('returnOrderId').value = orderId;
+                });
+            });
+
+            // Gửi form yêu cầu trả hàng
+            document.getElementById('returnOrderForm').addEventListener('submit', async function (e) {
+                e.preventDefault();
+                const formData = new FormData(this);
+
+                const response = await fetch('/Order/RequestReturn', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    alert(result.message);
+                    bootstrap.Modal.getInstance(document.getElementById('returnOrderModal')).hide();
+                    location.reload();
+                } else {
+                    alert(result.message || "Không thể gửi yêu cầu trả hàng.");
+                }
+            });
 
     </script>
 }
-
