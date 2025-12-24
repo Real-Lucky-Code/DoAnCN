@@ -463,7 +463,66 @@ namespace WedBanHang.Controllers
 
             return sb.ToString().Normalize(System.Text.NormalizationForm.FormC);
         }
+        [HttpGet("/train-search-model")]
+        public IActionResult TrainSearchModel()
+        {
+            var products = _context.Products
+                .Select(p => new WebBanHang.AI.SearchModelTrainer.ProductInput
+                {
+                    Name = p.Name ?? "",
+                    Description = p.Description ?? "",
+                    CategoryName = p.Category != null ? p.Category.Name : ""
+                })
+                .ToList();
 
+            if (products.Count == 0)
+                return BadRequest(" Không có sản phẩm nào để huấn luyện.");
+
+            WebBanHang.AI.SearchModelTrainer.TrainModel(products);
+            return Ok("Đã huấn luyện mô hình tìm kiếm nâng cao!");
+        }
+
+
+        [HttpGet("/api/search/suggest")]
+        public IActionResult Suggest(string query)
+        {
+            if (string.IsNullOrWhiteSpace(query))
+                return Json(new string[0]);
+
+            var modelPath = Path.Combine("AI", "Models", "searchModel.zip");
+            if (!System.IO.File.Exists(modelPath))
+            {
+                var products = _context.Products
+                    .Select(p => new WebBanHang.AI.SearchModelTrainer.ProductInput
+                    {
+                        Name = p.Name,
+                        Description = p.Description ?? "",
+                        CategoryName = p.Category.Name ?? ""
+                    }).ToList();
+
+                WebBanHang.AI.SearchModelTrainer.TrainModel(products);
+            }
+
+            var suggestion = WebBanHang.AI.SearchModelTrainer.Predict(new WebBanHang.AI.SearchModelTrainer.ProductInput
+            {
+                Name = query,
+                Description = query,
+                CategoryName = query
+            });
+
+            var fuzzyMatches = _context.Products
+                .Where(p => p.Name.Contains(query)
+                         || (p.Description ?? "").Contains(query)
+                         || (p.Category.Name ?? "").Contains(query))
+                .Select(p => p.Name)
+                .Take(5)
+                .ToList();
+
+            if (!fuzzyMatches.Contains(suggestion))
+                fuzzyMatches.Insert(0, suggestion);
+
+            return Json(fuzzyMatches.Take(5));
+        }
 
     }
 }
