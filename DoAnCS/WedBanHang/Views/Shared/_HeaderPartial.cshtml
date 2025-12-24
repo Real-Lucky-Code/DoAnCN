@@ -55,8 +55,12 @@
             <!-- Navigation links + Notifications + Login -->
             <div class="collapse navbar-collapse" id="mainNavbar">
                 <!-- Tìm kiếm -->
-                <form class="d-flex mx-auto search-bar" method="get" action="/Product/Index">
-                    <input class="form-control me-2" style="width: 900px" type="search" name="search" placeholder="Tìm kiếm sản phẩm..." aria-label="Search" />
+                <form class="d-flex mx-auto search-bar position-relative" method="get" action="/Product/Index">
+                    <div class="me-2" style="position: relative; width: 900px;">
+                        <input id="searchBox" class="form-control" type="search" name="search"
+                               placeholder="Tìm kiếm sản phẩm..." autocomplete="off" aria-label="Search" />
+                        <ul id="suggestionList" class="suggestion-list"></ul>
+                    </div>
                     <button class="btn btn-primary" type="submit">
                         <i class="fas fa-search"></i>
                     </button>
