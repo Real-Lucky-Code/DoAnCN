@@ -33,215 +33,150 @@
 
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="utf-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>@ViewData["Title"] - WedBanHang</title>
-        <script type="importmap"></script>
-        <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-        <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-        <link rel="stylesheet" href="~/WedBanHang.styles.css" asp-append-version="true" />
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - WedBanHang</title>
+    <script type="importmap"></script>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/WedBanHang.styles.css" asp-append-version="true" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
 
-    </head>
-    <body>
+</head>
+<body>
     @await Html.PartialAsync("_HeaderPartial")
 
 
-        <div class="container-lg" style="padding-top: 90px;">
-            <main role="main" class="pb-3">
-                @RenderBody()
-            </main>
-        </div>
+    <div class="container-lg" style="padding-top: 90px;">
+        <main role="main" class="pb-3">
+            @RenderBody()
+        </main>
+    </div>
 
-        @if (User.Identity.IsAuthenticated)
-        {
-            @await Html.PartialAsync("_ChatPopup")
+    @if (User.Identity.IsAuthenticated)
+    {
+        @await Html.PartialAsync("_ChatPopup")
 
-            <button id="open-ai-chat" class="btn btn-warning mt-2"> 🤖 Chat với AI </button>
+        @await Html.PartialAsync("_AiChatPartial")
 
-            <div id="aiChatPopup" class="chat-popup" style="display:none;">
-                <div class="chat-header bg-warning text-dark">
-                    <b>Chat với AI</b>
-                    <span class="close" onclick="closeAiChat()">×</span>
-                </div>
+    }
 
-                <div id="aiChatBox" class="chat-body"></div>
-
-                <form onsubmit="event.preventDefault(); sendToAi();">
-                    <input id="aiInput" type="text" class="chat-input"
-                           placeholder="Nhập tin nhắn để hỏi AI..." />
-                    <button class="btn btn-warning">Gửi</button>
-                </form>
-            </div>
-       
-        }
-    
-        @await Html.PartialAsync("_FooterPartial")
+    @await Html.PartialAsync("_FooterPartial")
 
 
-        <script src="~/lib/jquery/dist/jquery.min.js"></script>
-        <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-        <script src="~/js/site.js" asp-append-version="true"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
-        @await RenderSectionAsync("Scripts", required: false)
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
+    @await RenderSectionAsync("Scripts", required: false)
 
-        <script>
-            document.addEventListener("DOMContentLoaded", function () {
-                document.querySelectorAll('.dropdown-item[data-notification-id]').forEach(item => {
-                    item.addEventListener('click', function (event) {
-                        event.preventDefault();
-                        event.stopPropagation();
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            document.querySelectorAll('.dropdown-item[data-notification-id]').forEach(item => {
+                item.addEventListener('click', function (event) {
+                    event.preventDefault();
+                    event.stopPropagation();
 
-                        const notificationId = item.dataset.notificationId;
+                    const notificationId = item.dataset.notificationId;
 
-                        fetch(`/Notification/MarkAsRead/${notificationId}`, {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json'
-                            }
-                        }).then(response => {
-                            if (response.ok) {
-                                // ✅ Đánh dấu là đã đọc
-                                item.classList.add('text-muted');
+                    fetch(`/Notification/MarkAsRead/${notificationId}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    }).then(response => {
+                        if (response.ok) {
+                            //  Đánh dấu là đã đọc
+                            item.classList.add('text-muted');
 
-                                // ✅ Giảm số badge
-                                const badge = document.querySelector('.notification-dropdown .badge.bg-danger');
-                                if (badge) {
-                                    let current = parseInt(badge.textContent);
-                                    if (!isNaN(current) && current > 0) {
-                                        current--;
-                                        if (current > 0) {
-                                            badge.textContent = current;
-                                        } else {
-                                            badge.remove();
-                                        }
+                            //  Giảm số badge
+                            const badge = document.querySelector('.notification-dropdown .badge.bg-danger');
+                            if (badge) {
+                                let current = parseInt(badge.textContent);
+                                if (!isNaN(current) && current > 0) {
+                                    current--;
+                                    if (current > 0) {
+                                        badge.textContent = current;
+                                    } else {
+                                        badge.remove();
                                     }
                                 }
-                            } else {
-                                alert('Lỗi khi đánh dấu thông báo là đã đọc.');
                             }
-                        }).catch(error => {
-                            console.error('Lỗi khi gửi yêu cầu:', error);
-                        });
+                        } else {
+                            alert('Lỗi khi đánh dấu thông báo là đã đọc.');
+                        }
+                    }).catch(error => {
+                        console.error('Lỗi khi gửi yêu cầu:', error);
                     });
                 });
             });
-        </script>
+        });
+    </script>
 
-        <script>
-            function updateCartCount() {
-                $.get('/ShoppingCart/GetCartCount', function (data) {
-                    const badge = $('#cartCount');
-                    if (data.count > 0) {
-                        badge.text(data.count);
-                        badge.show();
-                    } else {
-                        badge.hide();
+    <script>
+        function updateCartCount() {
+            $.get('/ShoppingCart/GetCartCount', function (data) {
+                const badge = $('#cartCount');
+                if (data.count > 0) {
+                    badge.text(data.count);
+                    badge.show();
+                } else {
+                    badge.hide();
+                }
+            });
+        }
+
+        document.addEventListener("DOMContentLoaded", function () {
+            updateCartCount();
+            setTimeout(updateCartCount, 100);
+            window.addEventListener("pageshow", updateCartCount);
+        });
+    </script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const input = document.getElementById("searchBox");
+            const suggestionList = document.getElementById("suggestionList");
+
+            if (!input) return;
+
+            input.addEventListener("input", async () => {
+                const query = input.value.trim();
+                if (query.length < 2) {
+                    suggestionList.innerHTML = "";
+                    suggestionList.style.display = "none";
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`/api/search/suggest?query=${encodeURIComponent(query)}`);
+                    if (!response.ok) return;
+                    const suggestions = await response.json();
+
+                    if (suggestions.length === 0) {
+                        suggestionList.innerHTML = "";
+                        suggestionList.style.display = "none";
+                        return;
                     }
-                });
-            }
 
-            document.addEventListener("DOMContentLoaded", function () {
-                updateCartCount();
-                setTimeout(updateCartCount, 100);
-                window.addEventListener("pageshow", updateCartCount);
+                    suggestionList.innerHTML = suggestions.map(s => `
+                        <li class="suggestion-item" onclick="selectSuggestion('${s.replace(/'/g, "\\'")}')">${s}</li>
+                    `).join("");
+
+                    suggestionList.style.display = "block";
+                } catch (error) {
+                    console.error("Error fetching suggestions:", error);
+                }
             });
-        </script>
-       <script>
-            const aiConnection = new signalR.HubConnectionBuilder()
-                .withUrl("/chathub")
-                .build();
+        });
 
-            aiConnection
-                .start()
-                .then(() => console.log("AI connection ready"))
-                .catch(err => console.error(err));
-
-
-             document.getElementById("open-ai-chat").onclick = function () {
-                document.getElementById("aiChatPopup").style.display = "block";
-            };
-
-            function closeAiChat() {
-                document.getElementById("aiChatPopup").style.display = "none";
-            }
-                    async function sendToAi() {
-            const msg = document.getElementById("aiInput").value.trim();
-            if (!msg) return;
-
-            if (aiConnection.state !== "Connected") {
-                console.warn("Waiting for connection...");
-                await aiConnection.start();
-            }
-
-            aiConnection.invoke("SendAiMessage", msg)
-                .catch(err => console.error(err));
-
-            document.getElementById("aiInput").value = "";
+        function selectSuggestion(value) {
+            document.getElementById("searchBox").value = value;
+            document.querySelector(".search-bar").submit();
         }
+    </script>
 
-            aiConnection.on("ReceiveMessage", function (sender, message, time, avatar) {
-                addAiMessage(sender, message, time, avatar);
-            });
-            function addAiMessage(sender, message, time, avatar) {
-
-                const box = document.getElementById("aiChatBox");
-
-                box.innerHTML += `
-                    <div class="chat-row">
-                        <b>${sender}</b>: ${message}
-                        <div class="time">${time}</div>
-                    </div>
-                `;
-
-                box.scrollTop = box.scrollHeight;
-            }
-
-       </script>
-    </body>
+</body>
 </html>
-<style>
-    /* Popup AI */
-    #aiChatPopup {
-        position: fixed;
-        bottom: 80px;
-        right: 25px;
-        width: 350px;
-        height: 450px;
-        background: white;
-        border-radius: 10px;
-        border: 1px solid #ccc;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.2);
-        z-index: 9999;
-        display: none;
-        overflow: hidden;
-    }
-
-        #aiChatPopup .chat-header {
-            padding: 10px;
-            font-size: 16px;
-        }
-
-    #aiChatBox {
-        height: 340px;
-        overflow-y: auto;
-        padding: 10px;
-    }
-
-    .chat-row {
-        margin-bottom: 10px;
-        background: #fff7d6;
-        padding: 8px 10px;
-        border-radius: 8px;
-    }
-
-    .chat-input {
-        width: 75%;
-        padding: 8px;
-        border-radius: 5px;
-        border: 1px solid #ddd;
-    }
-
-</style>
